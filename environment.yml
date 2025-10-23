@@ -1,0 +1,32 @@
+name: bhpockets-quant
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.11
+  - pip
+  - numpy
+  - pandas
+  - scipy
+  - matplotlib
+  - seaborn
+  - arviz
+  - pytensor
+  - pymc>=5
+  - numba
+  - xarray
+  - h5py
+  - tqdm
+  - requests
+  - pyarrow
+  - fastparquet
+  - astropy
+  - statsmodels
+  - scikit-learn
+  - gwpy
+  - pip:
+      - pesummary>=0.13.6
+      - gwosc>=0.5.4
+      - corner
+      - kuiper
+      - tqdm-loggable
