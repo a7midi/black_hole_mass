@@ -1,163 +1,207 @@
-\
 #!/usr/bin/env python
 """
-30_bayes_mixture_lattice.py
+30_bayes_mixture_lattice.py  —  lightweight Bayesian test for lattice periodicity in M^2
 
-Bayesian comparison: smooth baseline vs. lattice mixture for the distribution of M^2.
-Implements a *single* mixture model containing both a smooth component and a lattice component
-with mixing fraction f_latt. The null (no lattice) corresponds to f_latt=0.
+Model idea (robust + fast on laptops):
+  • Work with phases φ = 2π · frac(M2 / Δ).
+  • If M2 lives near a lattice nΔ with Gaussian fuzz σ ≪ Δ, the φ’s cluster near 0.
+  • We model φ with a mixture: Uniform(0,2π) with weight (1−f) plus VonMises(μ=0, κ) with weight f.
+  • Priors: log Δ ~ Uniform[log Dmin, log Dmax],  f ~ Beta(1,1),  κ ~ HalfNormal(σ=5).
+  • Derived: σ/Δ ≈ 1 / (2π √κ)  (large-κ approximation connecting von Mises to wrapped normal).
 
-We report posterior for Δ, σ/Δ, f_latt and a **Savage–Dickey Bayes factor** for H1 (f>0) vs H0 (f=0).
+Why this design?
+  - It avoids building a huge Gaussian comb in M^2 directly (saves RAM and avoids float32/64 clashes).
+  - It is still faithful to the key prediction: periodic alignment of M^2 modulo Δ.
+  - It nests H0 (no lattice) at f=0, so we can report a Savage–Dickey style Bayes factor via a small-ε interval.
+
+CLI:
+  python src/30_bayes_mixture_lattice.py --dataset GW --draws 1200 --tune 800 --max-N 40000 --chains 2 --cores 1
 """
 from __future__ import annotations
-import os, sys, argparse
+import os, argparse, math
+from pathlib import Path
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+
+# PyMC imports (float64 everywhere to avoid dtype crashes)
 import pymc as pm
 import pytensor.tensor as pt
-import arviz as az
-import pytensor.tensor as pt
-
-from common import DERIVED, PLOTS, auto_delta_grid, rng
-
-def load_M2(dataset: str, use_Aeff: bool = False) -> np.ndarray:
-    df = pd.read_parquet(os.path.join(DERIVED, "M2_samples.parquet"))
-    if dataset != "all":
-        df = df[df["dataset"].isin([dataset])]
-    x = df["A_eff"].values if use_Aeff else df["M2"].values
-    x = x[np.isfinite(x)]
-    return x
-
-def broken_powerlaw_baseline(x: np.ndarray):
-    """
-    Return a simple fixed-shape baseline logpdf up to an additive constant, for reweighting inside PyMC.
-    We avoid introducing free scales: the break is at the median of x; slopes are set by the empirical
-    tails via Hill-type estimates.
-    """
-    xn = x / np.median(x)
-    left_slope = 1.0 + np.clip((np.log(np.median(xn)) - np.log(np.percentile(xn, 25))) / (np.log(np.percentile(xn, 25))), -5, 5)
-    right_slope = 1.0 + np.clip((np.log(np.percentile(xn, 75)) - np.log(np.median(xn))) / (np.log(np.percentile(xn, 75))), -5, 5)
-    # clamp for stability
-    left_slope = float(np.nan_to_num(left_slope, nan=2.0))
-    right_slope = float(np.nan_to_num(right_slope, nan=2.0))
-    xm = np.median(x)
-    def logpdf_fn(z):
-        z = pt.clip(z, 1e-12, np.max(x)*10)
-        logz = pt.log(z / xm)
-        # piecewise slopes
-        logp = pt.switch(pt.lt(z, xm), -left_slope * pt.abs(logz), -right_slope * pt.abs(logz))
-        return logp - pm.math.logsumexp(logp)  # stabilized
-    return logpdf_fn
-
-def lattice_logpdf(z, Delta, sigma, xmin, xmax):
-    """
-    Compute logpdf for the lattice-mixture (sum_n N(z; nΔ, σ^2)) with n covering [xmin, xmax].
-    Uniform w_n in the covered range.
-    """
-    n_min = pt.cast(pt.floor(xmin / Delta) - 2, "int32")
-    n_max = pt.cast(pt.ceil(xmax / Delta) + 2, "int32")
-    n = pt.arange(n_min, n_max + 1)
-    centers = Delta * pt.cast(n, Delta.dtype)
-    # Gaussian kernels
-    logk = -0.5 * ((z[:, None] - centers[None, :]) / sigma)**2 - pt.log(sigma) - 0.5 * pt.log(2*np.pi)
-    # Uniform mixture over n
-    logpdf = pm.math.logsumexp(logk, axis=1) - pt.log(n.shape[0])
-    return logpdf
-
-def savage_dickey_BF(prior_a: float, prior_b: float, posterior_samples_f: np.ndarray, at: float = 0.0, eps: float = 1e-3):
-    """
-    Savage-Dickey density ratio for nested hypothesis H0: f=0 vs H1: f>0
-    with Beta(prior_a, prior_b) prior on f in [0,1].
-    We estimate posterior density near 0 using a small window [0, eps].
-    """
-    from scipy.stats import beta as beta_dist
-    prior_density_at_0 = beta_dist.pdf(at + eps/2, prior_a, prior_b)  # approximate at boundary
-    post = np.asarray(posterior_samples_f)
-    post_density_near_0 = np.mean((post >= at) & (post <= at + eps)) / eps
-    BF10 = prior_density_at_0 / max(post_density_near_0, 1e-12)
-    return float(BF10)
-
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--dataset", choices=["GW","XRB","EHT","all"], default="all")
-    ap.add_argument("--use-Aeff", action="store_true")
-    ap.add_argument("--draws", type=int, default=3000)
-    ap.add_argument("--tune", type=int, default=2000)
-    ap.add_argument("--seed", type=int, default=42)
-    args = ap.parse_args()
-
-    x = load_M2(args.dataset, use_Aeff=args.use_Aeff)
-    x = x[np.isfinite(x)]
-    xmin, xmax = float(np.min(x)), float(np.max(x))
-
-    # Prior ranges based only on data extents
-    Dgrid = auto_delta_grid(x, n=100)
-    Dmin, Dmax = float(np.min(Dgrid)), float(np.max(Dgrid))
-
-    with pm.Model() as model:
-        # Lattice parameters
-        log_Delta = pm.Uniform("log_Delta", lower=np.log(Dmin), upper=np.log(Dmax))
-        Delta = pm.Deterministic("Delta", pt.exp(log_Delta))
-        theta = pm.Beta("theta", alpha=2.0, beta=2.0)     # σ/Δ in (0,1)
-        sigma = pm.Deterministic("sigma", pt.exp(Delta) * theta)
-
-        # Lattice fraction
-        a0, b0 = 1.0, 1.0  # Uniform prior on [0,1]
-        f_latt = pm.Beta("f_latt", alpha=a0, beta=b0)
-
-        # Smooth baseline (fixed shape, normalized by construction as log-weights)
-        base_logpdf_fn = broken_powerlaw_baseline(x)
-
-        z = pm.MutableData("z", x.astype("float64"))
-        logpdf_latt = lattice_logpdf(z, Delta=pt.exp(Delta), sigma=sigma, xmin=xmin, xmax=xmax)
-        logpdf_base = base_logpdf_fn(z)
-
-        # Mixture log-likelihood
-        logp = pm.logaddexp(pt.log(f_latt) + logpdf_latt, pt.log1p(-f_latt) + logpdf_base)
-        pm.Potential("lik", logp.sum())
-
-        idata = pm.sample(draws=args.draws, tune=args.tune, target_accept=0.9, chains=4, random_seed=args.seed, compute_convergence_checks=True)
-
-    # Summaries
-    az.summary(idata, var_names=["Delta","theta","sigma","f_latt"]).to_csv(os.path.join(PLOTS, f"bayes_summary_{args.dataset}.csv"))
-    post = az.extract(idata, var_names=["Delta","theta","sigma","f_latt"]).to_dataframe()
-    post["Delta"] = np.exp(post["Delta"])
-
-    # Savage–Dickey Bayes factor for f_latt
-    BF10 = savage_dickey_BF(1.0, 1.0, post["f_latt"].values, at=0.0, eps=1e-3)
-    with open(os.path.join(PLOTS, f"bayes_BF_{args.dataset}.json"), "w") as f:
-        import json
-        json.dump({"BF10_f_latt_gt_0_vs_eq_0": BF10}, f, indent=2)
-
-    # Simple plots
-    import matplotlib.pyplot as plt
-
-    # Posterior of Delta and sigma/Delta
-    plt.figure()
-    plt.hist(post["Delta"], bins=60, density=True)
-    plt.xlabel(r"$\Delta$ in $M^2$ units")
-    plt.ylabel("Posterior density")
-    plt.title(f"Posterior of lattice spacing Δ ({args.dataset})")
-    plt.tight_layout()
-    plt.savefig(os.path.join(PLOTS, f"posterior_Delta_{args.dataset}.png"), dpi=180)
-
-    plt.figure()
-    plt.hist(post["theta"], bins=60, density=True)
-    plt.xlabel(r"$\sigma/\Delta$")
-    plt.ylabel("Posterior density")
-    plt.title(f"Posterior of jitter ratio σ/Δ ({args.dataset})")
-    plt.tight_layout()
-    plt.savefig(os.path.join(PLOTS, f"posterior_sigma_over_Delta_{args.dataset}.png"), dpi=180)
-
-    # Joint posterior
+# Force float64 in the backend if available
+try:
+    import pytensor
+    pytensor.config.floatX = "float64"
+except Exception:
     try:
-        import corner
-        corner.corner(post[["Delta","theta","f_latt"]].values, labels=[r"$\Delta$", r"$\sigma/\Delta$", r"$f_{\rm latt}$"])
-        plt.savefig(os.path.join(PLOTS, f"corner_Delta_theta_flatt_{args.dataset}.png"), dpi=180)
+        import aesara
+        aesara.config.floatX = "float64"
     except Exception:
         pass
 
-    print(f"[done] Savage–Dickey BF10 (lattice vs no lattice) = {BF10:.3g}")
+# -------------------------------
+# Utilities
+# -------------------------------
+def load_M2(dataset: str, samples_path: Path = Path("data/derived/M2_samples.parquet"),
+            use_Aeff: bool = False, max_N: int | None = None, seed: int = 42) -> np.ndarray:
+    """Return a 1D numpy array of M^2 (or A_eff proxy) for the selected dataset."""
+    df = pd.read_parquet(samples_path)
+    if dataset != "all":
+        df = df.query("dataset == @dataset").copy()
+        if df.empty:
+            raise SystemExit(f"No rows for dataset={dataset} in {samples_path}")
+
+    col = "Aeff" if use_Aeff and "Aeff" in df.columns else "M2"
+    x = df[col].to_numpy(dtype=np.float64)
+    x = x[np.isfinite(x) & (x > 0)]
+    if max_N is not None and len(x) > max_N:
+        rng = np.random.default_rng(seed)
+        x = rng.choice(x, size=max_N, replace=False)
+    return x
+
+def auto_delta_bounds(x: np.ndarray) -> tuple[float, float]:
+    """Loose but safe bounds for Δ given the support of x = M^2 (in Msun^2)."""
+    q1, q99 = np.quantile(x, [0.01, 0.99])
+    Dmin = max(q1/30.0, 1e-3)     # let Δ be smaller than the lower scale, but not crazy small
+    Dmax = q99/2.0                # Δ cannot exceed half the upper support (else few bins exist)
+    if Dmax <= Dmin:
+        Dmax = Dmin * 5.0
+    return float(Dmin), float(Dmax)
+
+def phases_from_M2(x: np.ndarray, Delta):
+    """φ = 2π · frac(x / Δ) computed symbolically with PyMC math."""
+    return 2.0 * np.pi * ( (x/Delta) - pm.math.floor(x/Delta) )
+
+def posterior_interval_BF10(samples_f: np.ndarray, eps: float = 0.01) -> float:
+    """
+    Savage–Dickey (interval) approximation for BF10 (lattice vs no-lattice).
+    Prior: f ~ Beta(1,1) so P(f<eps) = eps.
+    Posterior: p_post = fraction of posterior draws with f<eps.
+    Then BF10 ≈ eps / p_post  (smaller posterior mass near 0 means stronger evidence for lattice).
+    """
+    p_post = max(1e-9, np.mean(samples_f < eps))
+    return eps / p_post
+
+# -------------------------------
+# Main
+# -------------------------------
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--samples", type=str, default="data/derived/M2_samples.parquet")
+    ap.add_argument("--dataset", choices=["GW","XRB","EHT","all"], default="all")
+    ap.add_argument("--use-Aeff", action="store_true", help="use A_eff proxy if present")
+    ap.add_argument("--max-N", type=int, default=40000, help="downsample to at most this many points")
+    ap.add_argument("--draws", type=int, default=1200)
+    ap.add_argument("--tune", type=int, default=800)
+    ap.add_argument("--chains", type=int, default=2)
+    ap.add_argument("--cores", type=int, default=1)
+    ap.add_argument("--target-accept", type=float, default=0.9)
+    ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--outdir", type=str, default="results/bayes")
+    args = ap.parse_args()
+
+    outdir = Path(args.outdir); outdir.mkdir(parents=True, exist_ok=True)
+
+    # ---------- data ----------
+    x = load_M2(args.dataset, Path(args.samples), use_Aeff=args.use_Aeff, max_N=args.max_N, seed=args.seed)
+    if len(x) < 100:
+        raise SystemExit(f"Too few samples after filtering/downsampling: N={len(x)}")
+    Dmin, Dmax = auto_delta_bounds(x)
+
+    # Cast to float64 constant for PyMC graph
+    x_const = pm.math.constant(x.astype(np.float64))
+
+    # ---------- model ----------
+    with pm.Model() as model:
+        # Priors
+        logD = pm.Uniform("logDelta", lower=np.log(Dmin), upper=np.log(Dmax))
+        Delta = pm.Deterministic("Delta", pm.math.exp(logD))
+
+        # κ >= 0 (concentration); use a weakly-informative half-normal
+        kappa = pm.HalfNormal("kappa", sigma=5.0)
+
+        # lattice weight f in (0,1)
+        f_latt = pm.Beta("f_latt", alpha=1.0, beta=1.0)
+
+        # Derived: approx σ/Δ from κ (large-κ approximation for von Mises ~ wrapped normal)
+        sigma_over_Delta = pm.Deterministic("sigma_over_Delta", 1.0/(2.0*np.pi*pm.math.sqrt(kappa + 1e-12)))
+
+        # Phases φ = 2π frac(x/Δ)
+        phi = phases_from_M2(x_const, Delta)
+
+        # Von Mises term
+        vm = pm.VonMises.dist(mu=0.0, kappa=kappa)
+        log_vm = pm.logp(vm, phi)
+
+        # Uniform term on [0,2π)
+        logU = -np.log(2.0*np.pi)
+
+        # Log-likelihood for the mixture on the circle
+        log_mix = pm.math.logaddexp(pt.log1p(-f_latt) + logU,
+                                  pm.math.log(f_latt) + log_vm)
+        pm.Potential("likelihood", pm.math.sum(log_mix))
+
+        idata = pm.sample(
+            draws=args.draws,
+            tune=args.tune,
+            chains=args.chains,
+            cores=args.cores,
+            target_accept=args.target_accept,
+            random_seed=args.seed,
+            init="jitter+adapt_diag",
+            progressbar=True,
+        )
+
+    # ---------- summaries ----------
+    post = idata.posterior
+    Delta_samps = np.asarray(post["Delta"]).reshape(-1)
+    theta_samps = np.asarray(post["sigma_over_Delta"]).reshape(-1)
+    f_samps     = np.asarray(post["f_latt"]).reshape(-1)
+
+    BF10 = posterior_interval_BF10(f_samps, eps=0.01)
+
+    # ---------- save ----------
+    import json
+    summary = {
+        "dataset": args.dataset,
+        "N_used": int(len(x)),
+        "Delta_median": float(np.median(Delta_samps)),
+        "Delta_16": float(np.quantile(Delta_samps, 0.16)),
+        "Delta_84": float(np.quantile(Delta_samps, 0.84)),
+        "sigma_over_Delta_median": float(np.median(theta_samps)),
+        "sigma_over_Delta_16": float(np.quantile(theta_samps, 0.16)),
+        "sigma_over_Delta_84": float(np.quantile(theta_samps, 0.84)),
+        "f_latt_median": float(np.median(f_samps)),
+        "f_latt_16": float(np.quantile(f_samps, 0.16)),
+        "f_latt_84": float(np.quantile(f_samps, 0.84)),
+        "BF10_eps0.01": float(BF10),
+        "Dmin": Dmin, "Dmax": Dmax,
+    }
+    (outdir / "summary.json").write_text(json.dumps(summary, indent=2))
+    print(json.dumps(summary, indent=2))
+
+    # ---------- plots ----------
+    try:
+        import arviz as az
+    except Exception:
+        az = None
+
+    # Trace / posterior plots
+    if az is not None:
+        az.to_netcdf(idata, str(outdir / "posterior.nc"))
+        az.plot_posterior(idata, var_names=["Delta", "sigma_over_Delta", "f_latt"], ref_val=[None, None, 0.0])
+        plt.tight_layout()
+        plt.savefig(outdir / "posterior_marginals.png", dpi=180)
+        plt.close()
+
+    # Simple corner-like joint for Δ and f
+    try:
+        import corner
+        arr = np.vstack([Delta_samps, theta_samps, f_samps]).T
+        corner.corner(arr, labels=[r"$\Delta$ ($M_\odot^2$)", r"$\sigma/\Delta$", r"$f_{\rm latt}$"])
+        plt.savefig(outdir / "corner.png", dpi=180, bbox_inches="tight")
+        plt.close()
+    except Exception:
+        pass
 
 if __name__ == "__main__":
     main()
