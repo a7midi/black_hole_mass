@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VOTABLE version="1.4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://www.ivoa.net/xml/VOTable/v1.2" >
+ <DESCRIPTION>
+   VizieR Astronomical Server vizier.cds.unistra.fr
+    Date: 2025-10-23T10:38:33 [V7.5.3]
+   In case of problem, please report to:	cds-question@unistra.fr
+ </DESCRIPTION>
+<!-- VOTable description at http://www.ivoa.net/Documents/latest/VOT.html -->
+<INFO name="service_protocol" value="ASU">  IVOID of the protocol through which the data was retrieved</INFO>
+<INFO name="request_date" value="2025-10-23T10:38:33">  Query execution date</INFO>
+<INFO name="request" value="https://vizier.cds.unistra.fr/viz-bin/votable/-tsv?-oc.form=dec&amp;-out.max=50&amp;-out.all=2&amp;-source=J/A+A/587/A61/tablea4&amp;-order=I&amp;-out=Name&amp;-out=n_Name&amp;-out=Ctp&amp;-out=SpType&amp;-out=Porb&amp;-out=e_Porb&amp;-out=l_K2&amp;-out=K2&amp;-out=e_K2&amp;-out=f(M1)&amp;-out.all=2&amp;-out=e_f(M1)&amp;-out=l_M1&amp;-out=M1&amp;-out=E_M1&amp;-out=e_M1&amp;-out=M1u&amp;-out=l_q&amp;-out=q&amp;-out=E_q&amp;-out=e_q&amp;-out=qu&amp;-out=l_i&amp;-out=i&amp;-out=e_i&amp;-out=iu&amp;-out=l_vrotsini&amp;-out=vrotsini&amp;-out=E_vrotsini&amp;-out=e_vrotsini&amp;-out=Ref&amp;-out.all=2&amp;">  Full request URL (POST)</INFO>
+<INFO name="contact" value="cds-question@unistra.fr">  Email or URL to contact publisher</INFO>
+<INFO name="server_software" value="7.5.3">  Software version</INFO>
+<INFO name="publisher" value="CDS">  Data centre that produced the VOTable</INFO>
+
+<!--
+Execution Reports
+ -->
+
+<RESOURCE ID="yCat_35870061" name="J/A+A/587/A61" type="results">
+  <DESCRIPTION>BlackCAT, stellar-mass BH in X-ray trans. (Corral-Santana+, 2016)</DESCRIPTION>  <INFO name="ivoid" value="ivo://cds.vizier/j/a+a/587/a61">    IVOID of underlying data collection  </INFO>
+  <INFO name="creator" value="Corral-Santana J.M.">    First author or institution  </INFO>
+  <INFO name="cites" value="bibcode:2016A&amp;A...587A..61C">    Article or Data origin sources  </INFO>
+  <INFO name="editor" value="Astronomy and Astrophysics">    Editor name (article)  </INFO>
+  <INFO name="original_date" value="2016">    Year of the article publication  </INFO>
+  <INFO name="reference_url" value="https://cdsarc.cds.unistra.fr/viz-bin/cat/J/A+A/587/A61">    Dataset landing page  </INFO>
+  <INFO name="citation" value="doi:10.26093/cds/vizier.35870061">    Dataset identifier that can be used for citation  </INFO>
+  <INFO name="publication_date" value="2017-12-22">    Date of first publication in the data centre  </INFO>
+  <INFO name="rights_uri" value="https://cds.unistra.fr/vizier-org/licences_vizier.html">    Licence URI  </INFO>
+
+  <TABLE ID="J_A_A_587_A61_tablea4" name="J/A+A/587/A61/tablea4">
+    <DESCRIPTION>Dynamical parameters of the sample of dynamical black holes</DESCRIPTION>
+    <!-- Definitions of GROUPs and FIELDs -->
+
+<!-- +++No column could be found to attach a LINK in table: J/A+A/587/A61/tablea4 -->
+    <FIELD name="Name" ucd="meta.id;pos.parallax.dyn" datatype="char" arraysize="18*"><!-- ucd="ID_MAIN" -->
+      <DESCRIPTION>Name of the dynamical black hole</DESCRIPTION>
+      <LINK href="http://vizier.cds.unistra.fr/viz-bin/VizieR-4?-info=XML&amp;-out.add=.&amp;-source=J/A+A/587/A61/tablea1&amp;Name=${Name}"/>
+    </FIELD>
+    <FIELD name="n_Name" ucd="meta.note" datatype="char" arraysize="1"><!-- ucd="NOTE" -->
+      <DESCRIPTION>[+] Note on Name (1)</DESCRIPTION>
+    </FIELD>
+    <FIELD name="Ctp" ucd="meta.id;meta.main" datatype="char" arraysize="10"><!-- ucd="ID_ASSOCIATED" -->
+      <DESCRIPTION>counterpart name</DESCRIPTION>
+    </FIELD>
+    <FIELD name="SpType" ucd="src.spType" datatype="char" arraysize="7"><!-- ucd="SPECT_TYPE_MK" -->
+      <DESCRIPTION>MK spectral type of the companion star</DESCRIPTION>
+    </FIELD>
+    <FIELD name="Porb" ucd="time.period" datatype="double" width="11" precision="7" unit="h"><!-- ucd="TIME_PERIOD" -->
+      <DESCRIPTION>Orbital period</DESCRIPTION>
+    </FIELD>
+    <FIELD name="e_Porb" ucd="stat.error" datatype="double" width="10" precision="7" unit="h"><!-- ucd="ERROR" -->
+      <DESCRIPTION>rms uncertainty on Porb</DESCRIPTION>
+    </FIELD>
+    <FIELD name="l_K2" ucd="meta.code.error" datatype="char" arraysize="1"><!-- ucd="CODE_LIMIT" -->
+      <DESCRIPTION>Limit flag on K2</DESCRIPTION>
+    </FIELD>
+    <FIELD name="K2" ucd="spect.dopplerVeloc" datatype="float" width="5" precision="1" unit="km/s"><!-- ucd="ORBIT_RV_S-AMPLITUDE" -->
+      <DESCRIPTION>Secondary star's radial velocity amplitude</DESCRIPTION>
+    </FIELD>
+    <FIELD name="e_K2" ucd="stat.error" datatype="float" width="4" precision="1" unit="km/s"><!-- ucd="ERROR" -->
+      <DESCRIPTION>rms uncertainty on K2</DESCRIPTION>
+    </FIELD>
+    <FIELD name="f(M1)" ucd="phys.mass" datatype="float" width="5" precision="2" unit="solMass"><!-- ucd="PHYS_MASS_FUNCTION" -->
+      <DESCRIPTION>Mass function</DESCRIPTION>
+    </FIELD>
+    <FIELD name="e_f(M1)" ucd="stat.error" datatype="float" width="5" precision="2" unit="solMass"><!-- ucd="ERROR" -->
+      <DESCRIPTION>rms uncertainty on f(M1)</DESCRIPTION>
+    </FIELD>
+    <FIELD name="l_M1" ucd="meta.code.error" datatype="char" arraysize="2"><!-- ucd="CODE_LIMIT" -->
+      <DESCRIPTION>[=&lt;&gt; ~] Limit flag on M1</DESCRIPTION>
+    </FIELD>
+    <FIELD name="M1" ucd="phys.mass" datatype="float" width="5" precision="2" unit="solMass"><!-- ucd="PHYS_MASS_MISC" -->
+      <DESCRIPTION>Mass of the black hole</DESCRIPTION>
+    </FIELD>
+    <FIELD name="E_M1" ucd="stat.error;stat.max" datatype="float" width="4" precision="1" unit="solMass"><!-- ucd="ERROR" -->
+      <DESCRIPTION>? Error on M1 (upper value)</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="e_M1" ucd="stat.error" datatype="float" width="4" precision="1" unit="solMass"><!-- ucd="ERROR" -->
+      <DESCRIPTION>? Error on M1 (lower value)</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="M1u" ucd="phys.mass" datatype="float" width="4" precision="1" unit="solMass"><!-- ucd="PHYS_MASS_MISC" -->
+      <DESCRIPTION>? Upper value of M1 interval</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="l_q" ucd="meta.code.error" datatype="char" arraysize="2"><!-- ucd="CODE_LIMIT" -->
+      <DESCRIPTION>[=&gt;&lt; ~] Limit flag on q</DESCRIPTION>
+    </FIELD>
+    <FIELD name="q" ucd="phys.mass" datatype="float" width="6" precision="3"><!-- ucd="PHYS_MASS_RATIO" -->
+      <DESCRIPTION>? Binary mass ratio</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="E_q" ucd="stat.error;stat.max" datatype="float" width="6" precision="3"><!-- ucd="ERROR" -->
+      <DESCRIPTION>? Error on q (upper value)</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="e_q" ucd="stat.error" datatype="float" width="6" precision="3"><!-- ucd="ERROR" -->
+      <DESCRIPTION>? Error on q (lower value)</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="qu" ucd="phys.mass;arith.ratio" datatype="float" width="6" precision="3"><!-- ucd="PHYS_MASS_RATIO" -->
+      <DESCRIPTION>? Upper value of q interval</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="l_i" ucd="meta.code.error" datatype="char" arraysize="2"><!-- ucd="CODE_LIMIT" -->
+      <DESCRIPTION>[~&gt;&lt;= ] Limit flag on i</DESCRIPTION>
+    </FIELD>
+    <FIELD name="i" ucd="src.orbital.inclination;pos.posAng" datatype="float" width="4" precision="1" unit="deg"><!-- ucd="POS_INCLIN_LOS" -->
+      <DESCRIPTION>? Inclination angle of the system</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="e_i" ucd="stat.error" datatype="float" width="4" precision="1" unit="deg"><!-- ucd="ERROR" -->
+      <DESCRIPTION>? rms uncertainty on i</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="iu" ucd="src.orbital.inclination" datatype="short" width="2" unit="deg"><!-- ucd="POS_INCLIN_LOS" -->
+      <DESCRIPTION>? Upper value of i interval</DESCRIPTION>
+      <VALUES null="-32768" />
+    </FIELD>
+    <FIELD name="l_vrotsini" ucd="meta.code.error" datatype="char" arraysize="2"><!-- ucd="CODE_LIMIT" -->
+      <DESCRIPTION>[&lt;= ] Limti flag on vrotsini</DESCRIPTION>
+    </FIELD>
+    <FIELD name="vrotsini" ucd="phys.veloc.rotat" datatype="float" width="5" precision="1" unit="km/s"><!-- ucd="VELOC_ROTAT" -->
+      <DESCRIPTION>? Rotational velocity, v_rot_*sini</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="E_vrotsini" ucd="stat.error;stat.max" datatype="float" width="4" precision="1" unit="km/s"><!-- ucd="ERROR" -->
+      <DESCRIPTION>? Error on vrotsini (upper value)</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="e_vrotsini" ucd="stat.error" datatype="float" width="4" precision="1" unit="km/s"><!-- ucd="ERROR" -->
+      <DESCRIPTION>? Error on vrotsini (lower value)</DESCRIPTION>
+      <VALUES null="NaN" />
+    </FIELD>
+    <FIELD name="Ref" ucd="meta.ref;meta.file" datatype="char" arraysize="88*"><!-- ucd="REFER_CODE" -->
+      <DESCRIPTION>References, in refs.dat file</DESCRIPTION>
+    </FIELD>
+<DATA><CSV headlines="3" colsep=";"><![CDATA[
+Name;n_Name;Ctp;SpType;Porb;e_Porb;l_K2;K2;e_K2;f(M1);e_f(M1);l_M1;M1;E_M1;e_M1;M1u;l_q;q;E_q;e_q;qu;l_i;i;e_i;iu;l_vrotsini;vrotsini;E_vrotsini;e_vrotsini;Ref
+ ; ; ; ;h;h; ;km/s;km/s;Msun;Msun; ;Msun;Msun;Msun;Msun; ; ; ; ; ; ;deg;deg;deg; ;km/s;km/s;km/s;
+------------------;-;----------;-------;-----------;----------;-;-----;----;-----;-----;--;-----;----;----;----;--;------;------;------;------;--;----;----;--;--;-----;----;----;----------------------------------------------------------------------------------------
+SWIFT J1357.2-0933;+;          ;M2-4V  ;  2.8000000; 0.3000000; ;967.0;49.0;11.00; 2.10;> ; 8.90;    ;    ;    ;~ ; 0.040;      ;      ;      ;~ ;90.0;    ;  ;  ;     ;    ;    ;Corral-Santana2013;MataSanchez2015
+XTE J1650-500     ; ;          ;~K4V   ;  7.6900000; 0.0200000; ;435.0;30.0; 2.70; 0.60;<=; 7.30;    ;    ;    ;  ;      ;      ;      ;      ;> ;47.0;    ;  ;  ;     ;    ;    ;Orosz2004
+XTE J1118+480     ; ;          ;K7-M1V ;  4.0784140; 0.0000050; ;709.0; 1.0; 6.27; 0.04;  ; 6.90;    ;    ; 8.2;  ; 0.024; 0.009; 0.009;      ;  ;68.0;    ;79;  ; 96.0; 3.0;11.0;Khargharia2013;Torres2004;GonzalezHernandez2008;Calvelo2009
+XTE J1859+226     ; ;V406 Vul  ;~K5V   ;  6.5800000; 0.0500000; ;541.0;70.0; 4.50; 0.60;> ; 5.42;    ;    ;    ;  ;      ;      ;      ;      ;< ;70.0;    ;  ;  ;     ;    ;    ;Corral-Santana2011
+SAX J1819.3-2525  ; ;V4641 Sgr ;B9III  ; 67.6152000; 0.0002000; ;211.0; 3.0; 2.70; 0.10;  ; 6.40; 0.6; 0.6;    ;  ; 0.630;      ;      ; 0.700;  ;72.0; 4.0;  ;  ;100.9; 0.8; 0.8;Orosz2001;MacDonald2014
+XTE J1550-564     ; ;          ;K2-K4IV; 37.0088000; 0.0001000; ;363.0; 6.0; 7.65; 0.38;  ; 7.81;    ;    ;15.6;~~; 0.030;      ;      ;      ;  ;75.0; 4.0;  ;  ; 55.0; 5.0; 5.0;Orosz2002;Orosz2011b
+GRO J1655-40      ; ;N.  Sco 94;F6IV   ; 62.9200000; 0.0030000; ;226.1; 0.8; 2.73; 0.09;  ; 6.00; 0.4; 0.4;    ;  ; 0.420; 0.030; 0.030;      ;  ;69.0; 2.0;  ;  ; 86.0; 3.3; 3.6;Orosz1997;VanDerHooft1998;Shahbaz1999;Shahbaz2003;Beer2002;GonzalezHernandez2008a
+GRS 1009-45       ; ;N.  Vel 93;K7-M0V ;  6.8449000; 0.0003000; ;475.0; 6.0; 3.20; 0.10;>~; 4.40;    ;    ;    ;  ; 0.140; 0.020; 0.020;      ;  ;37.0;    ;80;  ;     ;    ;    ;Filippenko1999;Shahbaz1996
+GRS 1915+105      ; ;V1487 Aql ;K1-5III;812.0000000; 4.0000000; ;126.0; 1.0; 7.00; 0.20;  ;10.10; 0.6; 0.6;    ;  ; 0.042; 0.024; 0.024;      ;  ;66.0; 2.0;  ;  ; 21.0; 4.0; 4.0;Harlaftis2004;Steeghs2013;Fender1999
+GRO J0422+32      ; ;          ;M4-5V  ;  5.0941850; 0.0000050; ;378.0;16.0; 1.19; 0.02;  ; 2.00;    ;    ;15.0;  ; 0.110; 0.050; 0.020;      ;  ;10.0;    ;50;  ; 90.0;22.0;27.0;Webb2000;Casares1995c;Beekman1997;Harlaftis1999
+GRS 1124-684      ; ;N.  Mus 91;K3-5V  ; 10.3825400; 0.0000700; ;406.0; 7.0; 3.00; 0.20;  ; 3.80;    ;    ; 7.5;  ; 0.090;      ;      ; 0.170;  ;39.0;    ;65;  ;106.0;13.0;13.0;Orosz1996;Shahbaz1997;Gelino2001a;Gelino2001;Casares1997
+GS 2023+338       ; ;V404 Cyg  ;K3III  ;155.3110000; 0.0020000; ;208.5; 0.7; 6.08; 0.06;  ; 9.00; 0.2; 0.6;    ;  ; 0.055;      ;      ; 0.064;  ;52.0;    ;80;  ; 39.0; 1.0; 1.0;Wagner1992;Casares1992;Casares1993;Casares1994;Shahbaz1994b;Khargharia2010
+GS 2000+251       ; ;QZ Vul    ;K3-7V  ;  8.2580950; 0.0000050; ;520.0; 5.0; 5.00; 0.10;  ; 5.50;    ;    ; 8.8;  ; 0.040; 0.010; 0.010;      ;  ;54.0;    ;60;  ; 86.0; 8.0; 8.0;Charles1991;Casares1995a;Harlaftis1996;Ioannou2004
+GS 1354-64        ; ;BW Cir    ;G5III  ; 61.0680000; 0.0020000; ;279.0; 5.0; 5.70; 0.30;>=; 7.60; 0.7; 0.7;    ;  ; 0.120; 0.030; 0.040;      ;<=;79.0;    ;  ;  ; 69.0; 8.0; 8.0;Casares2004;Casares2009
+H 1705-250        ; ;N.  Oph 77;K3-M0V ; 12.5100000; 0.0300000; ;448.0; 4.0; 4.90; 0.10;  ; 4.90;    ;    ; 7.9;<=; 0.053;      ;      ;      ;  ;48.0;    ;80;<=; 79.0;    ;    ;Remillard1996;Filippenko1997;Harlaftis1997;Martin1995
+3A 0620-003       ; ;          ;K2-7V  ;  7.7523372; 0.0000002; ;437.0; 2.0; 2.79; 0.04;  ; 6.60; 0.3; 0.3;    ;  ; 0.074; 0.006; 0.006;      ;  ;51.0; 0.9;  ;  ;     ;    ;    ;Cantrell2010;Orosz1994;GonzalezHernandez2010
+1H 1659-487       ; ;GX 339-4  ;>GIV   ; 42.1400000; 0.0100000;>;317.0;10.0; 5.80; 0.50;> ; 6.00;    ;    ;    ;<=; 0.125;      ;      ;      ;  ;    ;    ;  ;  ;     ;    ;    ;Hynes2003;Hynes2004; Munoz-Darias2008
+4U 1543-475       ; ;IL Lup    ;A2V    ; 26.7937700; 0.0000700; ;124.0; 4.0; 0.25; 0.01;  ; 8.40;    ;    ;10.4;  ; 3.200;      ;      ; 4.000;  ;20.7; 1.5;  ;  ; 46.0; 2.0; 2.0;Orosz1998;Orosz2003
+]]></CSV></DATA>
+</TABLE>
+<INFO name="matches" value="18">matching records</INFO>
+
+<INFO name="Warning" value="skip recno in all column selection"/>
+</RESOURCE>
+</VOTABLE>
